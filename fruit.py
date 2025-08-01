@@ -28,6 +28,10 @@ class FruitsSpawner(Entity, metaclass=Singelton):
         elif random_fruit_type == 2:
             self.fruits.append(GameManager().instatiate(ShieldFruit(pos)))
 
+    def kill(self):
+        super().kill()
+        self.fruits.clear()
+
 
 class Fruit(Entity):
     R = 10

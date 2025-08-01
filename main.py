@@ -1,11 +1,9 @@
 import random
 import pygame
-from pygame import K_LEFT, Color, K_a, K_d, K_w
-from fruit import Fruit
 from pyengine import *
 from scene_manager import SceneManager, SceneType
-from snake import Snake, SnakeKeys
 from globals import *
+from snake import SnakeCollisionManager
 
 
 def main():
@@ -13,15 +11,14 @@ def main():
     pygame.init()
     pygame.display.set_caption("Template")
     screen = pygame.display.set_mode((W, H))
-
     SceneManager().set_scene(SceneType.MAIN_MENU)
 
     # UpdateManager().start_fixed_update_loop()
     while not GameManager().should_exit:
         screen.fill(BG)
         GameManager().update()
-        GameManager().render(screen)
-        # GameManager().render_debug(screen)
+        # GameManager().render(screen)
+        GameManager().render_debug(screen)
         pygame.display.flip()
     # UpdateManager().stop_fixed_update_loop()
 

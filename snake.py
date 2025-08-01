@@ -25,7 +25,6 @@ class SnakeCollisionManager(Entity, metaclass=Singelton):
         super().__init__()
         self.snakes: List[Snake] = []
         self.cut_skins: Dict[int, SnakeCollisionManager.NodeData] = {}
-        GameManager().instatiate(self)
         self.circle_sur = pygame.Surface(
             (Snake.NODE_R * 2, Snake.NODE_R * 2), pygame.SRCALPHA
         )
@@ -128,6 +127,11 @@ class SnakeCollisionManager(Entity, metaclass=Singelton):
                 SnakeCollisionManager.REJOIN_R,
                 1,
             )
+
+    def kill(self):
+        super().kill()
+        self.snakes.clear()
+        self.cut_skins.clear()
 
 
 @dataclass
