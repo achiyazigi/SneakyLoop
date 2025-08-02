@@ -5,10 +5,10 @@ from typing import Dict
 
 from pygame import K_LEFT, K_RIGHT, K_SPACE, K_UP
 from fruit import Fruit, FruitsSpawner, ShieldFruit
-from globals import H, W
+from globals import *
 from pyengine import *
 from ui import Bar, Score
-from utils import draw_arrow, draw_border, shortest_vector, snakes_count, wrap, wrap_ip
+from utils import draw_arrow, draw_border, shortest_vector, wrap, wrap_ip
 
 
 class SnakeCollisionManager(Entity, metaclass=Singelton):
@@ -151,7 +151,8 @@ class SnakeInfoDisplay(Entity):
         self.snake = snake
 
         self.transform.size = Size(
-            (W - Snake.INFO_PAD * (snakes_count() + 1)) / snakes_count(),
+            (W - Snake.INFO_PAD * (settings.snakes_count() + 1))
+            / settings.snakes_count(),
             SnakeInfoDisplay.H,
         )
         self.transform.pos = Pos(
@@ -199,17 +200,14 @@ class Snake(Entity):
     snake_count = 0
     pause = False
 
-    @staticmethod
-    def generate_color():
-        return Color(randint(0, 255), randint(0, 255), randint(0, 255))
-
     def __init__(self, pos: Pos, keys=SnakeKeys()):
         super().__init__()
         SnakeCollisionManager().add(self)
         self.id = Snake.snake_count
+        assert self.id < len(settings.colors)
+        self.color = settings.colors[self.id]
         Snake.snake_count += 1
         self.transform.pos = pos
-        self.color = Snake.generate_color()
         self.dir = Vector2(random() - 0.5, random() - 0.5).normalize()
         self.turning_dir = 0
         self.nodes: List[Vector2] = [self.transform.pos.copy()]

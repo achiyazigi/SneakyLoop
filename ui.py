@@ -59,7 +59,7 @@ class Score(Entity):
         self.transform.size = normal_size.copy()
         self.normal_size = normal_size
         self.animation_max_scale = animation_max_scale
-        self.font = pygame.font.SysFont("kohinoortelugu", Score.FONT_SIZE)
+        self.font = pygame.font.SysFont("assets/fonts/SFNSMono.ttf", Score.FONT_SIZE)
         self.text_sur = self.create_text_sur()
         self.scale = 1
 
@@ -91,3 +91,102 @@ class Score(Entity):
         if self.scale != 1:
             text_sur = pygame.transform.scale_by(text_sur, self.scale)
         sur.blit(text_sur, self.transform.pos)
+
+
+class Slider(Entity):
+    HEIGHT = 10
+    COLOR = Color("White")
+    CONTROL_WIDTH = 5
+
+    def __init__(
+        self,
+        width,
+        initial_value,
+        on_change,
+        min=0,
+        max=1,
+        step=0.1,
+        color=COLOR,
+        name="",
+    ):
+        super().__init__()
+        self.transform.size = Size(width, Slider.HEIGHT)
+        self.value = initial_value
+        self.on_change = on_change
+        self.color = color
+        self.min = min
+        self.max = max
+        self.step = step
+        assert self.min <= self.value <= self.max
+        InputManager().register_mouse_pressed(pygame.BUTTON_LEFT, self, self.on_pressed)
+        InputManager().register_mouse_released(
+            pygame.BUTTON_LEFT, self, self.on_release
+        )
+        self.dragging = False
+        self.name_sur = GameManager().font.render(name, True, Slider.COLOR)
+
+    def set_value(self, value):
+        self.value = value
+
+    def on_pressed(self):
+        mouse_pos = pygame.mouse.get_pos()
+        if self.transform.rect().collidepoint(mouse_pos):
+            self.dragging = True
+
+    def on_release(self):
+        self.dragging = False
+
+    def get_control_rect_center(self):
+        offset_val = self.value - self.min
+        offset_max = self.max - self.min
+        return self.transform.pos.x + self.transform.size.w * offset_val / offset_max
+
+    def get_value_from_x(self, x):
+        offset_x = x - self.transform.pos.x
+        precentage = offset_x / self.transform.size.w
+        return precentage * (self.max - self.min) + self.min
+
+    def update(self, dt):
+        super().update(dt)
+        if self.dragging:
+            mouse_pos = pygame.mouse.get_pos()
+            self.value = pygame.math.clamp(
+                (self.get_value_from_x(mouse_pos[0]) + self.step / 2)
+                // self.step
+                * self.step,
+                self.min,
+                self.max,
+            )
+            self.on_change(self.value)
+
+    def render(self, sur):
+        super().render(sur)
+        sur.blit(self.name_sur, self.transform.pos - Pos(0, self.name_sur.height))
+        pygame.draw.rect(
+            sur,
+            Slider.COLOR,
+            pygame.Rect(
+                self.transform.pos.x,
+                self.transform.pos.y + self.transform.size.h / 3,
+                self.transform.size.w,
+                self.transform.size.h / 3,
+            ),
+        )
+        pygame.draw.rect(
+            sur,
+            self.color,
+            pygame.Rect(
+                self.get_control_rect_center() - Slider.CONTROL_WIDTH / 2,
+                self.transform.pos.y,
+                Slider.CONTROL_WIDTH,
+                Slider.HEIGHT,
+            ),
+        )
+        font_sur = GameManager().font.render(f"{self.value:.2f}", False, Slider.COLOR)
+        sur.blit(
+            font_sur,
+            (
+                self.get_control_rect_center() - font_sur.width / 2,
+                self.transform.rect().bottom,
+            ),
+        )

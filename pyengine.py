@@ -209,6 +209,7 @@ class Entity(ABC):
             RenderManager().unregister(self)
             self._z_index = z_index
             RenderManager().register(self)
+            InputManager().update_callbacks_order()
         else:
             self._z_index = z_index
 
@@ -348,7 +349,8 @@ class RenderManager(metaclass=Singelton):
                 entity.render(sur)
 
 
-CallbacksDict = dict[int, list[tuple[Entity, Callable]]]
+# the callback should return true to stop propegate
+CallbacksDict = dict[int, list[tuple[Entity, Callable[[], bool]]]]
 
 
 class InputManager(metaclass=Singelton):
@@ -359,26 +361,41 @@ class InputManager(metaclass=Singelton):
         self.callbacks_mouse_pressed: CallbacksDict = {}
         self.callbacks_mouse_released: CallbacksDict = {}
         self.callbacks_mouse_scroll: List[Tuple[Entity, Callable[[Vector2], None]]] = []
+        self.update_callbacks_entities_order = False
 
-    def _register_key(callbacks: CallbacksDict, key, entity, func):
+    def _update_callbacks_for(self, callbacks: CallbacksDict):
+        for val in callbacks.values():
+            val.sort(key=lambda e: e[0].z_index, reverse=True)
+        self.update_callbacks_entities_order = False
+
+    def update_callbacks_order(self):
+        self._update_callbacks_for(self.callbacks_key_down)
+        self._update_callbacks_for(self.callbacks_key_up)
+        self._update_callbacks_for(self.callbacks_mouse_pressed)
+        self._update_callbacks_for(self.callbacks_mouse_released)
+
+    def _register_key(self, callbacks: CallbacksDict, key, entity: Entity, func):
         if key not in callbacks:
             callbacks[key] = []
         callbacks[key].append((entity, func))
+        self.update_callbacks_entities_order = True
+        # idx = bisect.bisect([e.z_index for e, _ in callbacks[key]], entity.z_index)
+        # callbacks[key].insert(idx, (entity, func))
 
     def register_key_down(self, key, entity: Entity, func):
-        InputManager._register_key(self.callbacks_key_down, key, entity, func)
+        self._register_key(self.callbacks_key_down, key, entity, func)
         return self
 
     def register_key_up(self, key, entity, func):
-        InputManager._register_key(self.callbacks_key_up, key, entity, func)
+        self._register_key(self.callbacks_key_up, key, entity, func)
         return self
 
     def register_mouse_pressed(self, button, entity, func):
-        InputManager._register_key(self.callbacks_mouse_pressed, button, entity, func)
+        self._register_key(self.callbacks_mouse_pressed, button, entity, func)
         return self
 
     def register_mouse_released(self, button, entity, func):
-        InputManager._register_key(self.callbacks_mouse_released, button, entity, func)
+        self._register_key(self.callbacks_mouse_released, button, entity, func)
 
     def register_mouse_scroll(self, entity, func):
         self.callbacks_mouse_scroll.append((entity, func))
@@ -386,7 +403,8 @@ class InputManager(metaclass=Singelton):
     def _trigger_key(callbacks: CallbacksDict, key):
         for entity, func in callbacks.get(key, []):
             if entity in GameManager().entities:
-                func()
+                if func():
+                    break
 
     def trigger_key_down(self, key):
         InputManager._trigger_key(self.callbacks_key_down, key)
@@ -416,6 +434,8 @@ class InputManager(metaclass=Singelton):
         """
         returns True if got a quit event
         """
+        if self.update_callbacks_entities_order:
+            self.update_callbacks_order()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return True

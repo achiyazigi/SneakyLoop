@@ -3,7 +3,6 @@ import pygame
 from pyengine import *
 from scene_manager import SceneManager, SceneType
 from globals import *
-from snake import SnakeCollisionManager
 
 
 def main():
@@ -17,8 +16,8 @@ def main():
     while not GameManager().should_exit:
         screen.fill(BG)
         GameManager().update()
-        # GameManager().render(screen)
-        GameManager().render_debug(screen)
+        GameManager().render(screen)
+        # GameManager().render_debug(screen)
         pygame.display.flip()
     # UpdateManager().stop_fixed_update_loop()
 

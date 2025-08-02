@@ -1,17 +1,60 @@
 from math import ceil
 from random import randint
+from color_pallete import ColorPalette
 from globals import *
 from pyengine import *
 from snake import Snake, SnakeAI, SnakeCollisionManager, SnakeKeys
 from pygame import *
 
-from utils import draw_border
+from ui import Slider
+from utils import draw_border, generate_color
+
+
+class ColorPicker(UiButton):
+    PALETTE_SIZE = Size(100, 100)
+
+    def __init__(
+        self,
+        center: Pos,
+        radius: int,
+        default: Color,
+        on_color_picked: Callable[[Color], None] = None,
+    ):
+        super().__init__()
+        self.transform.pos = center - Size(radius)
+        self.transform.size = Size(radius * 2)
+        self.r = radius
+        self.color = default
+        self.z_index = 1
+        self.on_color_picked = on_color_picked
+
+    def on_mouse_released(self):
+        super().on_mouse_released()
+        color_palette = GameManager().instatiate(
+            ColorPalette(Pos(self.transform.rect().topright), ColorPicker.PALETTE_SIZE)
+        )
+        color_palette.on_pick = lambda color: self.on_pick(color_palette, color)
+
+    def on_pick(self, color_palette: ColorPalette, color: Color):
+        self.color = color
+        if self.on_color_picked:
+            self.on_color_picked(self.color)
+        GameManager().destroy(color_palette)
+
+    def render(self, sur):
+        pygame.draw.circle(sur, self.color, self.transform.rect().center, self.r)
 
 
 class MainMenu(Entity):
+
     BUTTONS_SIZE = Size(100, 30)
-    BUTTONS_GAP = 10
+    BUTTONS_GAP = 20
     BUTTONS_MARGIN_TOP = 100
+    SLIDERS_COLOR = Color(70, 70, 70)
+    MIN_BOTS = 0
+    MAX_BOTS = 10
+    COLOR_PICK_BUTTON_R = 10
+    COLOR_PICK_BUTTONS_GAP = 5
 
     class PlayButton(UiButton):
         def __init__(self, pos, on_play: Callable[[], None]):
@@ -33,6 +76,80 @@ class MainMenu(Entity):
                 self.on_play,
             )
         )
+        self.bots_slider = GameManager().instatiate(
+            Slider(
+                MainMenu.BUTTONS_SIZE.w,
+                settings.bots_count,
+                self.on_bots_change,
+                MainMenu.MIN_BOTS,
+                MainMenu.MAX_BOTS,
+                1,
+                MainMenu.SLIDERS_COLOR,
+                "Bots",
+            )
+        )
+        self.bots_slider.transform.pos = (
+            self.play_button.transform.rect().bottomleft + Size(0, MainMenu.BUTTONS_GAP)
+        )
+        self.bots_color_pickers: List[ColorPicker] = []
+        self.update_bots_color_pickers()
+
+    def update_snake_color(self, idx: int, color: Color):
+        assert idx < len(settings.colors)
+        settings.colors[idx] = color
+        print(settings.colors)
+
+    def update_bots_color_pickers(self):
+        bots_colors_size = Size(
+            settings.bots_count
+            * (MainMenu.COLOR_PICK_BUTTON_R * 2 + MainMenu.COLOR_PICK_BUTTONS_GAP)
+            - MainMenu.COLOR_PICK_BUTTONS_GAP,
+            MainMenu.COLOR_PICK_BUTTON_R * 2,
+        )
+        bots_colors_pos = Pos(
+            (W - bots_colors_size.w) / 2,
+            self.bots_slider.transform.rect().bottom + MainMenu.BUTTONS_GAP,
+        )
+
+        if len(self.bots_color_pickers) < settings.bots_count:
+
+            assert len(settings.colors) >= settings.bots_count
+
+            for i in range(len(self.bots_color_pickers), settings.bots_count):
+                self.bots_color_pickers.append(
+                    GameManager().instatiate(
+                        ColorPicker(
+                            bots_colors_pos
+                            + Pos(
+                                i
+                                * (
+                                    MainMenu.COLOR_PICK_BUTTON_R * 2
+                                    + MainMenu.COLOR_PICK_BUTTONS_GAP
+                                ),
+                                0,
+                            ),
+                            MainMenu.COLOR_PICK_BUTTON_R,
+                            settings.colors[i],
+                            lambda color, i=i: self.update_snake_color(i, color),
+                        )
+                    )
+                )
+        else:
+            GameManager().destroy(*self.bots_color_pickers[settings.bots_count :])
+            self.bots_color_pickers = self.bots_color_pickers[: settings.bots_count]
+        for i in range(len(self.bots_color_pickers)):
+            self.bots_color_pickers[i].transform.pos = bots_colors_pos + Pos(
+                i
+                * (MainMenu.COLOR_PICK_BUTTON_R * 2 + MainMenu.COLOR_PICK_BUTTONS_GAP),
+                0,
+            )
+
+    def on_bots_change(self, value):
+        settings.bots_count = int(value)
+        if settings.snakes_count() > len(settings.colors):
+            for _ in range(settings.snakes_count() - len(settings.colors)):
+                settings.colors.append(generate_color())
+        self.update_bots_color_pickers()
 
     def kill(self):
         super().kill()
@@ -47,7 +164,7 @@ class Gameplay(Entity):
     COUNTDOWN_SECS = 3
     COUNTDOWN_COLOR = Color(151, 216, 121)
     FONT_SIZE = 48
-    GAME_OVER_TIME_SECS = 5  # 60 * 3
+    GAME_OVER_TIME_SECS = 60 * 3
     TIMER_PAD_Y = 30
 
     def __init__(self):
@@ -57,16 +174,12 @@ class Gameplay(Entity):
         GameManager().instatiate(SnakeCollisionManager())
 
         Snake.pause = True
-        for _ in range(bots_count):
+        for _ in range(settings.bots_count):
             GameManager().instatiate(SnakeAI(Pos(randint(0, W), randint(0, H))))
 
         GameManager().instatiate(Snake(Pos(W, H / 2)))
-        # GameManager().instatiate(
-        #     Snake(Pos(W, H / 2), SnakeKeys(K_d, K_a, K_w))
-        # )
-        # GameManager().instatiate(
-        #     Snake(Pos(W, H / 2), SnakeKeys(K_j, K_g, K_y))
-        # )
+        GameManager().instatiate(Snake(Pos(W, H / 2), SnakeKeys(K_d, K_a, K_w)))
+        GameManager().instatiate(Snake(Pos(W, H / 2), SnakeKeys(K_j, K_g, K_y)))
         self.font = pygame.font.SysFont(GameManager().font.name, Gameplay.FONT_SIZE)
         self.countdown = 3
         self.countdown_ceiled = ceil(self.countdown)
@@ -164,8 +277,8 @@ class GameOver(Entity):
 
     def __init__(self):
         super().__init__()
-        self.scores_font = pygame.font.SysFont(
-            "sfnsmono", GameOver.TEXT_SIZE, bold=True
+        self.scores_font = pygame.font.Font(
+            "assets/fonts/SFNSMono.ttf", GameOver.TEXT_SIZE
         )
         self.title_font = pygame.font.SysFont(
             GameManager().font.name, GameOver.TITLE_SIZE
@@ -198,7 +311,7 @@ class GameOver(Entity):
             key=lambda s: s.info_display.score.score,
             reverse=True,
         ):
-            is_bot = snake.id < bots_count
+            is_bot = snake.id < settings.bots_count
             name = f"{'Bot' if is_bot else 'Player'} {snake.id}:"
             res.append(
                 self.scores_font.render(

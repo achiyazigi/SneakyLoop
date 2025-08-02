@@ -1,7 +1,8 @@
+from random import randint
 import pygame
 import math
 
-from globals import H, W, bots_count, players_count
+from globals import H, W, settings
 from pyengine import Entity, Pos, Size
 
 
@@ -76,5 +77,5 @@ def draw_border(entity: Entity, sur: pygame.Surface, color: pygame.Color, width=
     )
 
 
-def snakes_count():
-    return bots_count + players_count
+def generate_color():
+    return pygame.Color(randint(0, 255), randint(0, 255), randint(0, 255))
