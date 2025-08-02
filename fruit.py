@@ -3,17 +3,19 @@ from globals import H, W
 from pyengine import *
 
 
-class FruitsSpawner(Entity, metaclass=Singelton):
+class FruitsSpawner(SingeltonEntity):
     INTERVAL_SECS = 2
 
     def __init__(self):
         super().__init__()
-        GameManager().instatiate(self)
         self.fruits: List[Fruit] = []
         self.spawn_timer = FruitsSpawner.INTERVAL_SECS
+        self.pause = True
 
     def update(self, dt):
         super().update(dt)
+        if self.pause:
+            return
         if self.spawn_timer >= FruitsSpawner.INTERVAL_SECS:
             self.spawn_timer = 0
             self.spawn(Pos(randint(0, W), randint(0, H)))

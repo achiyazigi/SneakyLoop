@@ -10,6 +10,7 @@ from typing import (
     List,
     MutableSequence,
     Sequence,
+    Set,
     Tuple,
     Union,
     overload,
@@ -557,9 +558,12 @@ class GameManager(metaclass=Singelton):
         for entity in entities:
             self.to_destroy.append(entity)
 
-    def clear_scene(self):
+    def clear_scene(self, exceptions: Set[Entity] = None):
         InputManager().clear()
-        self.destroy(*self.entities)
+        entities = self.entities
+        if exceptions:
+            entities = (e for e in entities if e not in exceptions)
+        self.destroy(*entities)
 
     def update(self):
         should_quit = InputManager().update()
@@ -734,3 +738,14 @@ class Animation(Entity):
         else:
             assert animation_type == AnimationType.EaseOutElastic
             return ease_out_elastic
+
+
+class SingeltonEntity(Entity, metaclass=Singelton):
+    def __init__(self):
+        super().__init__()
+        GameManager().instatiate(self)
+
+    def kill(self):
+        super().kill()
+        self.state = EntityState.Initialized
+        GameManager().instatiate(self)

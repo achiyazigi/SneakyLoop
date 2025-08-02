@@ -1,6 +1,7 @@
 from math import ceil
 from random import randint
 from color_pallete import ColorPalette
+from fruit import FruitsSpawner
 from globals import *
 from pyengine import *
 from snake import Snake, SnakeAI, SnakeCollisionManager, SnakeKeys
@@ -170,10 +171,10 @@ class Gameplay(Entity):
     def __init__(self):
         super().__init__()
         self.timer = Gameplay.GAME_OVER_TIME_SECS
-        SnakeCollisionManager().state = EntityState.Initialized
-        GameManager().instatiate(SnakeCollisionManager())
 
         Snake.pause = True
+        FruitsSpawner().pause = True
+        SnakeCollisionManager().reset()
         for _ in range(settings.bots_count):
             GameManager().instatiate(SnakeAI(Pos(randint(0, W), randint(0, H))))
 
@@ -207,6 +208,7 @@ class Gameplay(Entity):
                 self.timer_ceiled = ceil(self.timer)
                 self.timer_sur = self.create_timer_sur()
                 Snake.pause = False
+                FruitsSpawner().pause = False
 
         if not Snake.pause:
             self.timer -= dt
@@ -215,6 +217,7 @@ class Gameplay(Entity):
                 self.timer_sur = self.create_timer_sur()
         if self.timer < 0:
             Snake.pause = True
+            FruitsSpawner().pause = True
             GameManager().destroy(self)
             SceneManager().set_scene(SceneType.GAME_OVER)
 
@@ -364,7 +367,7 @@ class SceneManager(metaclass=Singelton):
         GameManager().instatiate(GameOver())
 
     def set_scene(self, scene_type: SceneType):
-        GameManager().clear_scene()
+        GameManager().clear_scene(exceptions={FruitsSpawner(), SnakeCollisionManager()})
 
         self.scene_type = scene_type
         if scene_type == SceneType.MAIN_MENU:

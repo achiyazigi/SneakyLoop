@@ -11,7 +11,7 @@ from ui import Bar, Score
 from utils import draw_arrow, draw_border, shortest_vector, wrap, wrap_ip
 
 
-class SnakeCollisionManager(Entity, metaclass=Singelton):
+class SnakeCollisionManager(SingeltonEntity):
     SKIN_DISAPPEAR_AFTER_SECS = 10
     BLINK_SKIN_FREQ = 0.5
     REJOIN_R = 20
@@ -28,6 +28,10 @@ class SnakeCollisionManager(Entity, metaclass=Singelton):
         self.circle_sur = pygame.Surface(
             (Snake.NODE_R * 2, Snake.NODE_R * 2), pygame.SRCALPHA
         )
+
+    def reset(self):
+        self.cut_skins.clear()
+        self.snakes.clear()
 
     def add(self, snake: "Snake"):
         self.snakes.append(snake)
@@ -130,8 +134,7 @@ class SnakeCollisionManager(Entity, metaclass=Singelton):
 
     def kill(self):
         super().kill()
-        self.snakes.clear()
-        self.cut_skins.clear()
+        self.reset()
 
 
 @dataclass
