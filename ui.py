@@ -2,6 +2,8 @@ from pyengine import *
 import pygame
 import math
 
+from utils import resource_path
+
 
 class Bar(Entity):
     BGCOLOR = pygame.Color(200, 0, 0)
@@ -59,7 +61,8 @@ class Score(Entity):
         self.transform.size = normal_size.copy()
         self.normal_size = normal_size
         self.animation_max_scale = animation_max_scale
-        self.font = pygame.font.SysFont("assets/fonts/SFNSMono.ttf", Score.FONT_SIZE)
+        snsfmono_path = resource_path("assets/fonts/SFNSMono.ttf")
+        self.font = pygame.font.Font(snsfmono_path, Score.FONT_SIZE)
         self.text_sur = self.create_text_sur()
         self.scale = 1
 

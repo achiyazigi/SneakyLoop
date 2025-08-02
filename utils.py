@@ -6,6 +6,17 @@ from globals import H, W, settings
 from pyengine import Entity, Pos, Size
 
 
+import sys
+import os
+
+
+def resource_path(rel_path):
+    """Get absolute path to resource, whether running from source or PyInstaller .exe"""
+    if getattr(sys, "frozen", False):
+        return os.path.join(sys._MEIPASS, rel_path)  # PyInstaller unpacked location
+    return os.path.join(os.path.abspath("."), rel_path)
+
+
 def draw_arrow(
     sur: pygame.Surface,
     origin: pygame.Vector2,

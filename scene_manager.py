@@ -7,7 +7,7 @@ from snake import Snake, SnakeAI, SnakeCollisionManager, SnakeKeys
 from pygame import *
 
 from ui import Slider
-from utils import draw_border, generate_color
+from utils import draw_border, generate_color, resource_path
 
 
 class ColorPicker(UiButton):
@@ -275,9 +275,8 @@ class GameOver(Entity):
 
     def __init__(self):
         super().__init__()
-        self.scores_font = pygame.font.Font(
-            "assets/fonts/SFNSMono.ttf", GameOver.TEXT_SIZE
-        )
+        snsfmono_path = resource_path("assets/fonts/SFNSMono.ttf")
+        self.scores_font = pygame.font.Font(snsfmono_path, GameOver.TEXT_SIZE)
         self.title_font = pygame.font.SysFont(
             GameManager().font.name, GameOver.TITLE_SIZE
         )
