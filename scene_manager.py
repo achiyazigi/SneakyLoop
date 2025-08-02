@@ -178,8 +178,6 @@ class Gameplay(Entity):
             GameManager().instatiate(SnakeAI(Pos(randint(0, W), randint(0, H))))
 
         GameManager().instatiate(Snake(Pos(W, H / 2)))
-        GameManager().instatiate(Snake(Pos(W, H / 2), SnakeKeys(K_d, K_a, K_w)))
-        GameManager().instatiate(Snake(Pos(W, H / 2), SnakeKeys(K_j, K_g, K_y)))
         self.font = pygame.font.SysFont(GameManager().font.name, Gameplay.FONT_SIZE)
         self.countdown = 3
         self.countdown_ceiled = ceil(self.countdown)

@@ -8,7 +8,7 @@ from pygame import Color
 class Settings:
     colors: List[Color]
     bots_count: int = 1
-    players_count: int = 3
+    players_count: int = 1
 
     def snakes_count(self):
         return self.bots_count + self.players_count
