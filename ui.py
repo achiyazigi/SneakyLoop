@@ -2,7 +2,59 @@ from pyengine import *
 import pygame
 import math
 
-from utils import resource_path
+from utils import get_mono_font, resource_path
+
+
+class CheckBox(UiButton):
+    DEFAULT_COLOR = Color("White")
+    BORDER_THICKNESS = 2
+
+    def __init__(
+        self,
+        pos: Pos,
+        size: int,
+        initial: bool,
+        name: str = "",
+        on_change: Callable[[bool], None] = None,
+        color: Color = None,
+    ):
+        super().__init__()
+        self.transform.pos = pos
+        self.transform.size = Size(size)
+        self.selected = initial
+        self.on_change = on_change
+        self.color = color if color else CheckBox.DEFAULT_COLOR
+        self.name_sur = self.create_name_sur(name)
+
+    def create_name_sur(self, name: str):
+        return GameManager().font.render(name, True, self.color)
+
+    def on_left_click(self):
+        super().on_left_click()
+        self.selected = not self.selected
+        if self.on_change:
+            self.on_change(self.selected)
+
+    def render(self, sur):
+        sur.blit(self.name_sur, self.transform.pos - Size(0, self.name_sur.height))
+        pygame.draw.rect(
+            sur, self.color, self.transform.rect(), CheckBox.BORDER_THICKNESS
+        )
+        if self.selected:
+            pygame.draw.line(
+                sur,
+                self.color,
+                self.transform.rect().topleft,
+                self.transform.rect().bottomright,
+                CheckBox.BORDER_THICKNESS,
+            )
+            pygame.draw.line(
+                sur,
+                self.color,
+                self.transform.rect().topright,
+                self.transform.rect().bottomleft,
+                CheckBox.BORDER_THICKNESS,
+            )
 
 
 class Bar(Entity):

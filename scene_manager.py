@@ -7,7 +7,7 @@ from pyengine import *
 from snake import Snake, SnakeAI, SnakeCollisionManager, SnakeKeys
 from pygame import *
 
-from ui import Slider
+from ui import CheckBox, Slider
 from utils import draw_border, generate_color, get_mono_font, resource_path
 
 
@@ -136,6 +136,26 @@ class MainMenu(Entity):
                 self.on_play,
             )
         )
+        self.theme_music_checkbox = GameManager().instatiate(
+            CheckBox(
+                self.play_button.transform.rect().bottomleft
+                + Size(0, MainMenu.BUTTONS_GAP),
+                MainMenu.BUTTONS_SIZE.h,
+                settings.music,
+                "music",
+                self.on_toggle_music,
+            )
+        )
+        self.sound_effects_checkbox = GameManager().instatiate(
+            CheckBox(
+                self.theme_music_checkbox.transform.rect().topright
+                + Size(MainMenu.BUTTONS_GAP, 0),
+                MainMenu.BUTTONS_SIZE.h,
+                settings.sound_effects,
+                "sound effects",
+                self.on_toggle_sound_effects,
+            )
+        )
         self.bots_slider = GameManager().instatiate(
             Slider(
                 MainMenu.BUTTONS_SIZE.w,
@@ -149,7 +169,8 @@ class MainMenu(Entity):
             )
         )
         self.bots_slider.transform.pos = (
-            self.play_button.transform.rect().bottomleft + Size(0, MainMenu.BUTTONS_GAP)
+            self.theme_music_checkbox.transform.rect().bottomleft
+            + Size(0, MainMenu.BUTTONS_GAP)
         )
         self.bots_color_pickers: List[ColorPicker] = []
         self.update_bots_color_pickers()
@@ -176,6 +197,12 @@ class MainMenu(Entity):
         )
         self.players_settings: List[PlayerSettings] = []
         self.update_players_settings()
+
+    def on_toggle_music(self, selected):
+        settings.music = selected
+
+    def on_toggle_sound_effects(self, selected):
+        settings.sound_effects = selected
 
     def update_snake_color(self, idx: int, color: Color):
         assert idx < len(settings.colors)
@@ -297,7 +324,8 @@ class Gameplay(Entity):
         self.timer_sur = self.create_timer_sur()
         self.z_index = 1
         self.theme_sound = pygame.mixer.Sound(resource_path("assets/audio/theme.wav"))
-        self.theme_sound.play(-1)
+        if settings.music:
+            self.theme_sound.play(-1)
 
     def create_game_countdown_sur(self):
         return self.font.render(

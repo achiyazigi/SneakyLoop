@@ -21,6 +21,8 @@ class Settings:
     keys: List[SnakeKeys]
     bots_count: int = 1
     players_count: int = 1
+    music: bool = False
+    sound_effects = True
 
     def snakes_count(self):
         return self.bots_count + self.players_count

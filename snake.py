@@ -3,12 +3,11 @@ import math
 from random import randint, random
 from typing import Dict
 import random
-from pygame import K_LEFT, K_RIGHT, K_SPACE, K_UP
 from fruit import Fruit, FruitsSpawner, ShieldFruit
 from globals import *
 from pyengine import *
 from ui import Bar, Score
-from utils import draw_arrow, draw_border, shortest_vector, wrap, wrap_ip
+from utils import draw_border, resource_path, shortest_vector, wrap, wrap_ip
 
 
 class SnakeCollisionManager(SingeltonEntity):
@@ -28,6 +27,7 @@ class SnakeCollisionManager(SingeltonEntity):
         self.circle_sur = pygame.Surface(
             (Snake.NODE_R * 2, Snake.NODE_R * 2), pygame.SRCALPHA
         )
+        self.cut_sound = pygame.mixer.Sound(resource_path("assets/audio/cut.wav"))
 
     def reset(self):
         self.cut_skins.clear()
@@ -47,6 +47,8 @@ class SnakeCollisionManager(SingeltonEntity):
         snake_attacked.nodes = snake_attacked.nodes[:node_attacked_idx]
 
         snake_attacked.speed = snake_attacked.calc_speed()
+        if settings.sound_effects:
+            self.cut_sound.play()
 
     def check_attack(self, snake_attacker: "Snake", snake_attacked: "Snake"):
         assert len(snake_attacked.nodes) > 1
@@ -214,6 +216,10 @@ class Snake(Entity):
         self.left_is_down = False
         self.right_is_down = False
         self.info_display = GameManager().instatiate(SnakeInfoDisplay(self))
+        self.loop_completed_sound = pygame.mixer.Sound(
+            resource_path("assets/audio/loop_completed.mp3")
+        )
+        self.eat_sound = pygame.mixer.Sound(resource_path("assets/audio/eat.wav"))
         InputManager().register_key_down(keys.k_right, self, self.on_right_down)
         InputManager().register_key_down(keys.k_left, self, self.on_left_down)
         InputManager().register_key_up(keys.k_right, self, self.on_right_up)
@@ -232,6 +238,8 @@ class Snake(Entity):
 
     def on_hit_fruit(self, fruit: Fruit):
         self.add_node()
+        if settings.sound_effects:
+            self.eat_sound.play()
         fruit.trigger_hit(self)
 
     def add_node(self):
@@ -273,6 +281,8 @@ class Snake(Entity):
         assert len(self.nodes) > 0
         self.transform.pos = self.nodes[0]
         self.speed = self.calc_speed()
+        if settings.sound_effects:
+            self.loop_completed_sound.play()
         self.info_display.score.add_score(Snake.score_func(last - first))
 
     def check_collisions(self):

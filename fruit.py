@@ -83,6 +83,8 @@ class SpeedFruit(Fruit):
             super().render(sur)
 
     def trigger_hit(self, snake):
+        if self.snake:
+            return
         self.snake = snake
         self.snake.speed_multiplier *= SpeedFruit.MULTIPLIER
         FruitsSpawner().fruits.remove(self)
