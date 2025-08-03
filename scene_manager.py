@@ -296,6 +296,8 @@ class Gameplay(Entity):
         self.timer_ceiled = ceil(self.timer)
         self.timer_sur = self.create_timer_sur()
         self.z_index = 1
+        self.theme_sound = pygame.mixer.Sound(resource_path("assets/audio/theme.wav"))
+        self.theme_sound.play(-1)
 
     def create_game_countdown_sur(self):
         return self.font.render(
@@ -329,6 +331,7 @@ class Gameplay(Entity):
             Snake.pause = True
             FruitsSpawner().pause = True
             GameManager().destroy(self)
+            self.theme_sound.stop()
             SceneManager().set_scene(SceneType.GAME_OVER)
             SnakeCollisionManager().cut_skins.clear()  # only clear cut_skins, keep snakes alive for game over scene
 

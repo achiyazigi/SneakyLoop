@@ -2,10 +2,13 @@ import pygame
 from pyengine import *
 from scene_manager import SceneManager, SceneType
 from globals import *
+from utils import resource_path
 
 
 def main():
     pygame.init()
+    pygame.mixer.init()
+
     pygame.display.set_caption("Template")
     screen = pygame.display.set_mode((W, H))
     SceneManager().set_scene(SceneType.MAIN_MENU)

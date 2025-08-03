@@ -30,9 +30,13 @@ class FruitsSpawner(SingeltonEntity):
         elif random_fruit_type == 2:
             self.fruits.append(GameManager().instatiate(ShieldFruit(pos)))
 
+    def reset(self):
+        GameManager().destroy(*self.fruits)
+        self.fruits.clear()
+
     def kill(self):
         super().kill()
-        self.fruits.clear()
+        self.reset()
 
 
 class Fruit(Entity):
