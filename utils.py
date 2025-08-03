@@ -17,6 +17,10 @@ def resource_path(rel_path):
     return os.path.join(os.path.abspath("."), rel_path)
 
 
+def get_mono_font(size: int):
+    return pygame.font.Font(resource_path("assets/fonts/SFNSMono.ttf"), size)
+
+
 def draw_arrow(
     sur: pygame.Surface,
     origin: pygame.Vector2,

@@ -8,7 +8,7 @@ from snake import Snake, SnakeAI, SnakeCollisionManager, SnakeKeys
 from pygame import *
 
 from ui import Slider
-from utils import draw_border, generate_color, resource_path
+from utils import draw_border, generate_color, get_mono_font, resource_path
 
 
 class ColorPicker(UiButton):
@@ -46,6 +46,63 @@ class ColorPicker(UiButton):
         pygame.draw.circle(sur, self.color, self.transform.rect().center, self.r)
 
 
+class PlayerSettings(Entity):
+    COLOR_PICK_BUTTON_R = 10
+    H = 20
+    H_GAP = 10
+    COLOR = Color(255, 255, 255)
+
+    def __init__(self, snake_id: int, pos: Pos):
+        super().__init__()
+        self.transform.pos = pos
+        self.snake_id = snake_id
+        self.color_picker = GameManager().instatiate(
+            ColorPicker(
+                self.transform.pos + Size(PlayerSettings.COLOR_PICK_BUTTON_R),
+                PlayerSettings.COLOR_PICK_BUTTON_R,
+                settings.colors[settings.bots_count + snake_id],
+                self.on_color_picked,
+            )
+        )
+        self.keys = settings.keys[self.snake_id]
+        self.font = get_mono_font(PlayerSettings.H)
+        self.left_key_sur = self.font.render(
+            pygame.key.name(self.keys.k_left), True, PlayerSettings.COLOR
+        )
+        self.right_key_sur = self.font.render(
+            pygame.key.name(self.keys.k_right), True, PlayerSettings.COLOR
+        )
+        self.dash_key_sur = self.font.render(
+            pygame.key.name(self.keys.k_dash), True, PlayerSettings.COLOR
+        )
+
+    def on_color_picked(self, color):
+        settings.colors[settings.bots_count + self.snake_id] = color
+
+    def render(self, sur):
+        sur.blit(
+            self.left_key_sur,
+            self.transform.pos
+            + 1 * Size(PlayerSettings.H_GAP + self.color_picker.transform.size.w, 0),
+        )
+        sur.blit(
+            self.right_key_sur,
+            self.transform.pos
+            + Size(self.left_key_sur.width, 0)
+            + 2 * Size(PlayerSettings.H_GAP + self.color_picker.transform.size.w, 0),
+        )
+        sur.blit(
+            self.dash_key_sur,
+            self.transform.pos
+            + Size(self.left_key_sur.width + self.right_key_sur.width, 0)
+            + 3 * Size(PlayerSettings.H_GAP + self.color_picker.transform.size.w, 0),
+        )
+
+    def kill(self):
+        super().kill()
+        GameManager().destroy(self.color_picker)
+
+
 class MainMenu(Entity):
 
     BUTTONS_SIZE = Size(100, 30)
@@ -54,7 +111,9 @@ class MainMenu(Entity):
     SLIDERS_COLOR = Color(70, 70, 70)
     MIN_BOTS = 0
     MAX_BOTS = 10
-    COLOR_PICK_BUTTON_R = 10
+    MIN_PLAYERS = 1
+    MAX_PLAYERS = 4
+    COLOR_PICK_BUTTON_R = PlayerSettings.COLOR_PICK_BUTTON_R
     COLOR_PICK_BUTTONS_GAP = 5
 
     class PlayButton(UiButton):
@@ -94,11 +153,33 @@ class MainMenu(Entity):
         )
         self.bots_color_pickers: List[ColorPicker] = []
         self.update_bots_color_pickers()
+        self.players_slider = GameManager().instatiate(
+            Slider(
+                MainMenu.BUTTONS_SIZE.w,
+                settings.players_count,
+                self.on_players_change,
+                MainMenu.MIN_PLAYERS,
+                MainMenu.MAX_PLAYERS,
+                1,
+                MainMenu.SLIDERS_COLOR,
+                "Players",
+            )
+        )
+        self.players_slider.transform.pos = (
+            self.bots_slider.transform.rect().bottomleft
+            + Size(
+                0,
+                MainMenu.BUTTONS_GAP
+                + MainMenu.COLOR_PICK_BUTTON_R * 2
+                + MainMenu.BUTTONS_GAP,
+            )
+        )
+        self.players_settings: List[PlayerSettings] = []
+        self.update_players_settings()
 
     def update_snake_color(self, idx: int, color: Color):
         assert idx < len(settings.colors)
         settings.colors[idx] = color
-        print(settings.colors)
 
     def update_bots_color_pickers(self):
         bots_colors_size = Size(
@@ -145,12 +226,39 @@ class MainMenu(Entity):
                 0,
             )
 
+    def update_players_settings(self):
+        if len(self.players_settings) < settings.players_count:
+            for i in range(len(self.players_settings), settings.players_count):
+                self.players_settings.append(
+                    GameManager().instatiate(
+                        PlayerSettings(
+                            i,
+                            self.players_slider.transform.rect().bottomleft
+                            + Size(
+                                0,
+                                MainMenu.BUTTONS_GAP
+                                + i * (MainMenu.BUTTONS_GAP + PlayerSettings.H),
+                            ),
+                        )
+                    )
+                )
+        else:
+            GameManager().destroy(*self.players_settings[settings.players_count :])
+            self.players_settings = self.players_settings[: settings.players_count]
+
     def on_bots_change(self, value):
         settings.bots_count = int(value)
         if settings.snakes_count() > len(settings.colors):
             for _ in range(settings.snakes_count() - len(settings.colors)):
                 settings.colors.append(generate_color())
         self.update_bots_color_pickers()
+
+    def on_players_change(self, value):
+        settings.players_count = int(value)
+        if settings.snakes_count() > len(settings.colors):
+            for _ in range(settings.snakes_count() - len(settings.colors)):
+                settings.colors.append(generate_color())
+        self.update_players_settings()
 
     def kill(self):
         super().kill()
@@ -178,7 +286,9 @@ class Gameplay(Entity):
         for _ in range(settings.bots_count):
             GameManager().instatiate(SnakeAI(Pos(randint(0, W), randint(0, H))))
 
-        GameManager().instatiate(Snake(Pos(W, H / 2)))
+        for i in range(settings.players_count):
+            assert i < len(settings.keys)
+            GameManager().instatiate(Snake(Pos(W, H / 2), settings.keys[i]))
         self.font = pygame.font.SysFont(GameManager().font.name, Gameplay.FONT_SIZE)
         self.countdown = 3
         self.countdown_ceiled = ceil(self.countdown)
@@ -220,6 +330,7 @@ class Gameplay(Entity):
             FruitsSpawner().pause = True
             GameManager().destroy(self)
             SceneManager().set_scene(SceneType.GAME_OVER)
+            SnakeCollisionManager().cut_skins.clear()  # only clear cut_skins, keep snakes alive for game over scene
 
     def render(self, sur):
         if self.countdown_ceiled >= 0:
@@ -257,7 +368,7 @@ class GameOver(Entity):
             super().__init__()
             self.transform.size = GameOver.BUTTONS_SIZE
             self.transform.pos = pos
-            self.text = "MainMenu"
+            self.text = "Main Menu"
 
         def on_left_click(self):
             super().on_left_click()
@@ -315,7 +426,7 @@ class GameOver(Entity):
             name = f"{'Bot' if is_bot else 'Player'} {snake.id}:"
             res.append(
                 self.scores_font.render(
-                    f"{name:<10}{snake.info_display.score.score}",
+                    f"{name:<10}{snake.info_display.score.score:<5}",
                     True,
                     snake.color,
                 )
@@ -339,10 +450,12 @@ class GameOver(Entity):
         sur.blit(self.title, Pos((W - self.title.width) / 2, GameOver.PAD_TOP))
         score_sur_y = self.transform.pos.y + GameOver.SCORES_PAD
 
+        score_sur_x = self.transform.pos.x + GameOver.SCORES_PAD
         for score_sur in self.score_surs:
-            sur.blit(
-                score_sur, Pos(self.transform.pos.x + GameOver.SCORES_PAD, score_sur_y)
-            )
+            if score_sur_y + score_sur.height > self.transform.rect().bottom:
+                score_sur_y = self.transform.pos.y + GameOver.SCORES_PAD
+                score_sur_x += score_sur.width + GameOver.SCORES_PAD
+            sur.blit(score_sur, Pos(score_sur_x, score_sur_y))
             score_sur_y += score_sur.height + GameOver.SCORES_GAP
 
 

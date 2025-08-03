@@ -269,7 +269,6 @@ class CollideEntity(Entity):
                 break
             collide_with_set = ColliderManager().graph.edges.get(base_type, {})
             for collide_with in collide_with_set:
-                print("found collision between", base_type, "and", collide_with)
                 func = ColliderManager().collision_functions_dict[
                     (base_type, collide_with)
                 ]

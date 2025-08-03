@@ -66,9 +66,13 @@ class SpeedFruit(Fruit):
         super().update(dt)
         if self.snake:
             if self.timer < 0:
-                self.snake.speed_multiplier /= SpeedFruit.MULTIPLIER
                 GameManager().destroy(self)
             self.timer -= dt
+
+    def kill(self):
+        super().kill()
+        if self.snake:
+            self.snake.speed_multiplier /= SpeedFruit.MULTIPLIER
 
     def render(self, sur):
         if not self.snake:

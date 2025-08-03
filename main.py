@@ -1,4 +1,3 @@
-import random
 import pygame
 from pyengine import *
 from scene_manager import SceneManager, SceneType
@@ -6,7 +5,6 @@ from globals import *
 
 
 def main():
-    random.seed(0)
     pygame.init()
     pygame.display.set_caption("Template")
     screen = pygame.display.set_mode((W, H))

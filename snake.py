@@ -2,7 +2,7 @@ from dataclasses import field
 import math
 from random import randint, random
 from typing import Dict
-
+import random
 from pygame import K_LEFT, K_RIGHT, K_SPACE, K_UP
 from fruit import Fruit, FruitsSpawner, ShieldFruit
 from globals import *
@@ -137,13 +137,6 @@ class SnakeCollisionManager(SingeltonEntity):
         self.reset()
 
 
-@dataclass
-class SnakeKeys:
-    k_right: int = K_RIGHT
-    k_left: int = K_LEFT
-    k_dash: int = K_UP
-
-
 class SnakeInfoDisplay(Entity):
     PAD = 10
     H = 70
@@ -211,18 +204,20 @@ class Snake(Entity):
         self.color = settings.colors[self.id]
         Snake.snake_count += 1
         self.transform.pos = pos
-        self.dir = Vector2(random() - 0.5, random() - 0.5).normalize()
+        self.dir = Vector2(random.random() - 0.5, random.random() - 0.5).normalize()
         self.turning_dir = 0
         self.nodes: List[Vector2] = [self.transform.pos.copy()]
         self.speed_multiplier = 1
         self.shield_timer = 0
         self.speed = self.calc_speed()
         self.dash = False
+        self.left_is_down = False
+        self.right_is_down = False
         self.info_display = GameManager().instatiate(SnakeInfoDisplay(self))
         InputManager().register_key_down(keys.k_right, self, self.on_right_down)
         InputManager().register_key_down(keys.k_left, self, self.on_left_down)
-        InputManager().register_key_up(keys.k_right, self, self.on_right_or_left_up)
-        InputManager().register_key_up(keys.k_left, self, self.on_right_or_left_up)
+        InputManager().register_key_up(keys.k_right, self, self.on_right_up)
+        InputManager().register_key_up(keys.k_left, self, self.on_left_up)
         InputManager().register_key_down(keys.k_dash, self, self.on_dash_down)
         InputManager().register_key_up(keys.k_dash, self, self.on_dash_up)
         for _ in range(10):
@@ -245,13 +240,26 @@ class Snake(Entity):
         self.speed = self.calc_speed()
 
     def on_right_down(self):
+        self.right_is_down = True
         self.turning_dir = 1
 
     def on_left_down(self):
+        self.left_is_down = True
         self.turning_dir = -1
 
-    def on_right_or_left_up(self):
-        self.turning_dir = 0
+    def on_right_up(self):
+        self.right_is_down = False
+        if self.left_is_down:
+            self.turning_dir = -1
+        else:
+            self.turning_dir = 0
+
+    def on_left_up(self):
+        self.left_is_down = False
+        if self.right_is_down:
+            self.turning_dir = 1
+        else:
+            self.turning_dir = 0
 
     def on_dash_down(self):
         if self.info_display.dash_bar.value > 0:
