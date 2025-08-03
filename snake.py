@@ -359,23 +359,89 @@ class SnakeAiActions(Enum):
     RIGHT = 1
 
 
+class SnakeAIState(Enum):
+    SEARCH = 0
+    GO_TO_FRUIT = 1
+    LOOP = 2
+    GO_TO_SNAKE = 3
+    GO_TO_CUT = 4
+
+
 class SnakeAI(Snake):
     ACTION_DUR_SECS = 3
+    FRUIT_CLOSE_ENOUGH_DIST = 200
 
     def __init__(self, pos):
         super().__init__(pos, SnakeKeys(None, None, None))
         self.action_timer = 0
         self.current_action = SnakeAI.random_action()
+        self.ai_state = SnakeAIState.SEARCH
+        self.aim_to_fruit: Fruit = None
+        self.aim_to_tail: Pos = None
 
     @staticmethod
     def random_action():
         return SnakeAiActions(randint(-1, 1))
 
+    def aim_to_pos(self, pos) -> SnakeAiActions:
+        sv = shortest_vector(self.transform.pos, pos)
+        angle = sv.angle_to(self.dir)
+        angle = ((angle + 180) % 360) - 180
+        if -20 < angle < 20:
+            return SnakeAiActions.STRAIGHT
+        elif angle >= 20:
+            return SnakeAiActions.LEFT
+        return SnakeAiActions.RIGHT
+
     def update(self, dt):
         super().update(dt)
-        self.action_timer += dt
-        if self.action_timer > SnakeAI.ACTION_DUR_SECS:
-            self.action_timer = 0
-            self.current_action = SnakeAI.random_action()
 
+        if self.ai_state == SnakeAIState.SEARCH:
+            if self.id in SnakeCollisionManager().cut_skins:
+                nodes_data = SnakeCollisionManager().cut_skins[self.id]
+                self.ai_state = SnakeAIState.GO_TO_CUT
+                self.aim_to_tail = nodes_data.nodes[-1]
+            else:
+                min_sqr_distance = SnakeAI.FRUIT_CLOSE_ENOUGH_DIST**2
+                for fruit in FruitsSpawner().fruits:
+                    dist_to_fruit = self.transform.pos.distance_squared_to(
+                        fruit.transform.pos
+                    )
+                    if dist_to_fruit < min_sqr_distance:
+                        min_sqr_distance = dist_to_fruit
+                        self.aim_to_fruit = fruit
+                if min_sqr_distance < SnakeAI.FRUIT_CLOSE_ENOUGH_DIST**2:
+                    self.ai_state = SnakeAIState.GO_TO_FRUIT
+            self.action_timer += dt
+            if self.action_timer > SnakeAI.ACTION_DUR_SECS:
+                self.action_timer = 0
+                self.current_action = SnakeAI.random_action()
+        elif self.ai_state == SnakeAIState.GO_TO_FRUIT:
+            assert self.aim_to_fruit != None
+            if self.aim_to_fruit not in FruitsSpawner().fruits:
+                self.ai_state = SnakeAIState.SEARCH
+            else:
+                self.current_action = self.aim_to_pos(self.aim_to_fruit.transform.pos)
+        elif self.ai_state == SnakeAIState.GO_TO_CUT:
+            assert self.aim_to_tail != None
+            if self.id in SnakeCollisionManager().cut_skins:
+                self.current_action = self.aim_to_pos(self.aim_to_tail)
+            else:
+                self.ai_state = SnakeAIState.SEARCH
         self.turning_dir = self.current_action.value
+
+    def render_debug(self, sur):
+        super().render_debug(sur)
+        if self.aim_to_fruit:
+            sv = shortest_vector(self.transform.pos, self.aim_to_fruit.transform.pos)
+            pygame.draw.line(
+                sur, Color("Red"), self.transform.pos, self.transform.pos + sv
+            )
+            angle_sur = GameManager().font.render(
+                f"{sv.angle_to(self.dir):.2f}", False, Color("Red")
+            )
+            state_sur = GameManager().font.render(
+                self.ai_state.name, False, Color("Red")
+            )
+            sur.blit(angle_sur, self.transform.pos + Size(0, 20))
+            sur.blit(state_sur, self.transform.pos + Size(0, 40))

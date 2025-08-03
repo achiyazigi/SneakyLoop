@@ -11,7 +11,6 @@ def main():
     pygame.display.set_caption("Sneaky Loop! by: achiyazigi")
     screen = pygame.display.set_mode((W, H))
     SceneManager().set_scene(SceneType.MAIN_MENU)
-
     # UpdateManager().start_fixed_update_loop()
     while not GameManager().should_exit:
         screen.fill(BG)
