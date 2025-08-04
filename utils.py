@@ -11,10 +11,11 @@ import os
 
 
 def resource_path(rel_path):
-    """Get absolute path to resource, whether running from source or PyInstaller .exe"""
-    if getattr(sys, "frozen", False):
-        return os.path.join(sys._MEIPASS, rel_path)  # PyInstaller unpacked location
-    return os.path.join(os.path.abspath("."), rel_path)
+    # """Get absolute path to resource, whether running from source or PyInstaller .exe"""
+    # if getattr(sys, "frozen", False):
+    #     return os.path.join(sys._MEIPASS, rel_path)  # PyInstaller unpacked location
+    # return os.path.join(os.path.abspath("."), rel_path)
+    return rel_path
 
 
 def get_mono_font(size: int):

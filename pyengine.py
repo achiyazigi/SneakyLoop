@@ -3,7 +3,7 @@ from enum import Enum
 from math import pi, sin
 from threading import Timer
 import pygame
-from pygame import Color, FRect, Vector2, Surface
+from pygame import Color, Rect, Vector2, Surface
 from abc import ABC, ABCMeta
 from typing import (
     Callable,
@@ -89,7 +89,7 @@ class Transform:
         self.size = Size(0, 0)
 
     def rect(self):
-        return FRect(self.pos, self.size)
+        return Rect(self.pos, self.size)
 
     @property
     def center(self):
@@ -521,7 +521,7 @@ class EmptyEntity(Entity):
 class GameManager(metaclass=Singelton):
     def __init__(self):
         self.entities: set[Entity] = set()
-        self.clock = pygame.Clock()
+        self.clock = pygame.time.Clock()
         self.dt = 0
         self.fps = 60
         self.should_exit = False
@@ -529,7 +529,7 @@ class GameManager(metaclass=Singelton):
         self.to_add: list[Entity] = []
         if not pygame.font.get_init():
             pygame.font.init()
-        self.font = pygame.Font()
+        self.font = pygame.font.Font(size=20)
 
     @overload
     def instatiate[T](self, __entity: T) -> T: ...
@@ -622,7 +622,7 @@ class UiButton(Entity):
         super().__init__()
         self.text = ""
         self.render_data = UiButton.RenderData(
-            Color("White"), Color("Blue"), pygame.Font()
+            Color("White"), Color("Blue"), GameManager().font
         )
         self.z_index = UiButton.UI_DEFAULT_Z_INDEX
         self.hovered = False

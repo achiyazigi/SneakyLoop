@@ -1,10 +1,11 @@
+import asyncio
 import pygame
 from pyengine import *
 from scene_manager import SceneManager, SceneType
 from globals import *
 
 
-def main():
+async def main():
     pygame.init()
     pygame.mixer.init()
 
@@ -18,9 +19,9 @@ def main():
         GameManager().render(screen)
         # GameManager().render_debug(screen)
         pygame.display.flip()
+        await asyncio.sleep(0)
     # UpdateManager().stop_fixed_update_loop()
 
 
-if __name__ == "__main__":
-    main()
-    pygame.quit()
+asyncio.run(main())
+pygame.quit()

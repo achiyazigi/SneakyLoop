@@ -36,7 +36,9 @@ class CheckBox(UiButton):
             self.on_change(self.selected)
 
     def render(self, sur):
-        sur.blit(self.name_sur, self.transform.pos - Size(0, self.name_sur.height))
+        sur.blit(
+            self.name_sur, self.transform.pos - Size(0, self.name_sur.get_height())
+        )
         pygame.draw.rect(
             sur, self.color, self.transform.rect(), CheckBox.BORDER_THICKNESS
         )
@@ -73,8 +75,7 @@ class Bar(Entity):
         self.transform.size = size
         self.edge_thickness = math.ceil(size.h / 6)
         self.name = name
-        font = pygame.font.SysFont(
-            GameManager().font.name,
+        font = pygame.font.Font(
             size=int(self.transform.size.h - self.edge_thickness * 2),
         )
         self.text_sur = font.render(self.name, True, Bar.TEXT_COLOR)
@@ -216,7 +217,7 @@ class Slider(Entity):
 
     def render(self, sur):
         super().render(sur)
-        sur.blit(self.name_sur, self.transform.pos - Pos(0, self.name_sur.height))
+        sur.blit(self.name_sur, self.transform.pos - Pos(0, self.name_sur.get_height()))
         pygame.draw.rect(
             sur,
             Slider.COLOR,
@@ -241,7 +242,7 @@ class Slider(Entity):
         sur.blit(
             font_sur,
             (
-                self.get_control_rect_center() - font_sur.width / 2,
+                self.get_control_rect_center() - font_sur.get_width() / 2,
                 self.transform.rect().bottom,
             ),
         )

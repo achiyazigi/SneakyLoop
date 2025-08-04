@@ -88,13 +88,13 @@ class PlayerSettings(Entity):
         sur.blit(
             self.right_key_sur,
             self.transform.pos
-            + Size(self.left_key_sur.width, 0)
+            + Size(self.left_key_sur.get_width(), 0)
             + 2 * Size(PlayerSettings.H_GAP + self.color_picker.transform.size.w, 0),
         )
         sur.blit(
             self.dash_key_sur,
             self.transform.pos
-            + Size(self.left_key_sur.width + self.right_key_sur.width, 0)
+            + Size(self.left_key_sur.get_width() + self.right_key_sur.get_width(), 0)
             + 3 * Size(PlayerSettings.H_GAP + self.color_picker.transform.size.w, 0),
         )
 
@@ -316,14 +316,14 @@ class Gameplay(Entity):
         for i in range(settings.players_count):
             assert i < len(settings.keys)
             GameManager().instatiate(Snake(Pos(W, H / 2), settings.keys[i]))
-        self.font = pygame.font.SysFont(GameManager().font.name, Gameplay.FONT_SIZE)
+        self.font = pygame.font.Font(size=Gameplay.FONT_SIZE)
         self.countdown = 3
         self.countdown_ceiled = ceil(self.countdown)
         self.game_countdown_sur = self.create_game_countdown_sur()
         self.timer_ceiled = ceil(self.timer)
         self.timer_sur = self.create_timer_sur()
         self.z_index = 1
-        self.theme_sound = pygame.mixer.Sound(resource_path("assets/audio/theme.wav"))
+        self.theme_sound = pygame.mixer.Sound(resource_path("assets/audio/theme.ogg"))
         if settings.music:
             self.theme_sound.play(-1)
 
@@ -367,12 +367,12 @@ class Gameplay(Entity):
         if self.countdown_ceiled >= 0:
             sur.blit(
                 self.game_countdown_sur,
-                (Size(W, H) - Size(self.game_countdown_sur.size)) / 2,
+                (Size(W, H) - Size(self.game_countdown_sur.get_size())) / 2,
             )
         else:
             sur.blit(
                 self.timer_sur,
-                Pos((W - self.timer_sur.width) / 2, Gameplay.TIMER_PAD_Y),
+                Pos((W - self.timer_sur.get_width()) / 2, Gameplay.TIMER_PAD_Y),
             )
 
     def kill(self):
@@ -420,11 +420,9 @@ class GameOver(Entity):
 
     def __init__(self):
         super().__init__()
-        snsfmono_path = resource_path("assets/fonts/SFNSMono.ttf")
-        self.scores_font = pygame.font.Font(snsfmono_path, GameOver.TEXT_SIZE)
-        self.title_font = pygame.font.SysFont(
-            GameManager().font.name, GameOver.TITLE_SIZE
-        )
+        self.scores_font = get_mono_font(GameOver.TEXT_SIZE)
+        self.title_font = pygame.font.Font(size=GameOver.TITLE_SIZE)
+
         self.score_surs: List[Surface] = self.create_score_surs()
         self.transform.size = GameOver.SIZE
         self.transform.pos = (
@@ -478,16 +476,16 @@ class GameOver(Entity):
             border_radius=GameOver.BORDER_RADIUS,
             width=GameOver.BORDER_WIDTH,
         )
-        sur.blit(self.title, Pos((W - self.title.width) / 2, GameOver.PAD_TOP))
+        sur.blit(self.title, Pos((W - self.title.get_width()) / 2, GameOver.PAD_TOP))
         score_sur_y = self.transform.pos.y + GameOver.SCORES_PAD
 
         score_sur_x = self.transform.pos.x + GameOver.SCORES_PAD
         for score_sur in self.score_surs:
-            if score_sur_y + score_sur.height > self.transform.rect().bottom:
+            if score_sur_y + score_sur.get_height() > self.transform.rect().bottom:
                 score_sur_y = self.transform.pos.y + GameOver.SCORES_PAD
-                score_sur_x += score_sur.width + GameOver.SCORES_PAD
+                score_sur_x += score_sur.get_width() + GameOver.SCORES_PAD
             sur.blit(score_sur, Pos(score_sur_x, score_sur_y))
-            score_sur_y += score_sur.height + GameOver.SCORES_GAP
+            score_sur_y += score_sur.get_height() + GameOver.SCORES_GAP
 
 
 class SceneType(Enum):

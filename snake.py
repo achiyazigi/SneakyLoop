@@ -27,7 +27,7 @@ class SnakeCollisionManager(SingeltonEntity):
         self.circle_sur = pygame.Surface(
             (Snake.NODE_R * 2, Snake.NODE_R * 2), pygame.SRCALPHA
         )
-        self.cut_sound = pygame.mixer.Sound(resource_path("assets/audio/cut.wav"))
+        self.cut_sound = pygame.mixer.Sound(resource_path("assets/audio/cut.ogg"))
 
     def reset(self):
         self.cut_skins.clear()
@@ -125,7 +125,7 @@ class SnakeCollisionManager(SingeltonEntity):
                 Snake.NODE_R,
             )
             for node in node_data.nodes:
-                sur.blit(self.circle_sur, node - Size(self.circle_sur.size) / 2)
+                sur.blit(self.circle_sur, node - Size(self.circle_sur.get_size()) / 2)
             pygame.draw.circle(
                 sur,
                 color_with_alpha,
@@ -217,9 +217,9 @@ class Snake(Entity):
         self.right_is_down = False
         self.info_display = GameManager().instatiate(SnakeInfoDisplay(self))
         self.loop_completed_sound = pygame.mixer.Sound(
-            resource_path("assets/audio/loop_completed.mp3")
+            resource_path("assets/audio/loop_completed.ogg")
         )
-        self.eat_sound = pygame.mixer.Sound(resource_path("assets/audio/eat.wav"))
+        self.eat_sound = pygame.mixer.Sound(resource_path("assets/audio/eat.ogg"))
         InputManager().register_key_down(keys.k_right, self, self.on_right_down)
         InputManager().register_key_down(keys.k_left, self, self.on_left_down)
         InputManager().register_key_up(keys.k_right, self, self.on_right_up)
