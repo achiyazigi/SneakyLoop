@@ -29,7 +29,7 @@ class Settings:
 
 
 settings = Settings(
-    [Color(randint(0, 255), randint(0, 255), randint(0, 255)) for _ in range(10)],
+    [Color(randint(0, 255), randint(0, 255), randint(0, 255)) for _ in range(14)],
     [
         SnakeKeys(),
         SnakeKeys(K_d, K_a, K_w),
