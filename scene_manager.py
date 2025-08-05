@@ -309,6 +309,7 @@ class Gameplay(Entity):
 
         Snake.pause = True
         FruitsSpawner().pause = True
+        FruitsSpawner().reset()
         SnakeCollisionManager().reset()
         for _ in range(settings.bots_count):
             GameManager().instatiate(SnakeAI(Pos(randint(0, W), randint(0, H))))
@@ -356,12 +357,8 @@ class Gameplay(Entity):
                 self.timer_ceiled = ceil(self.timer)
                 self.timer_sur = self.create_timer_sur()
         if self.timer < 0:
-            Snake.pause = True
-            FruitsSpawner().pause = True
+
             GameManager().destroy(self)
-            self.theme_sound.stop()
-            SceneManager().set_scene(SceneType.GAME_OVER)
-            SnakeCollisionManager().cut_skins.clear()  # only clear cut_skins, keep snakes alive for game over scene
 
     def render(self, sur):
         if self.countdown_ceiled >= 0:
@@ -378,6 +375,12 @@ class Gameplay(Entity):
     def kill(self):
         super().kill()
         Snake.snake_count = 0
+        FruitsSpawner().pause = True
+        Snake.pause = True
+        self.theme_sound.stop()
+        SceneManager().set_scene(SceneType.GAME_OVER)
+        FruitsSpawner().reset()
+        SnakeCollisionManager().cut_skins.clear()  # only clear cut_skins, keep snakes alive for game over scene
 
 
 class GameOver(Entity):

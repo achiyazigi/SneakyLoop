@@ -36,7 +36,7 @@ class ColorPalette(Entity):
         self.redraw_palette()
 
         for y in range(int(self.saturation_bar_transfrom.size.h)):
-            s = 255 * (y / self.palette_transform.size.h)
+            s = int(255 * (y / self.palette_transform.size.h))
             pygame.draw.line(
                 self.saturation_bar,
                 Color(s, s, s),
@@ -98,9 +98,8 @@ class ColorPalette(Entity):
     def get_hovered_color(self):
         if self.hovered_pos:
             if self.palette_transform.rect().collidepoint(self.hovered_pos):
-                return self.palette.get_at(
-                    self.hovered_pos - self.palette_transform.pos
-                )
+                offset_pos = self.hovered_pos - self.palette_transform.pos
+                return self.palette.get_at((int(offset_pos.x), int(offset_pos.y)))
         return None
 
     def update(self, dt):
