@@ -24,7 +24,7 @@ jobs:
         run: pip install pygbag --upgrade
 
       - name: Build web version
-        run: timeout 5s python3 -m pygbag --ume_block=0 . || true
+        run: timeout 5s python3 -m pygbag --template loading_template.tmpl --ume_block=0 . || true
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
