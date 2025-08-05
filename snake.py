@@ -220,12 +220,21 @@ class Snake(Entity):
             resource_path("assets/audio/loop_completed.ogg")
         )
         self.eat_sound = pygame.mixer.Sound(resource_path("assets/audio/eat.ogg"))
+        self.should_follow_mouse_pos = False
+        self.mouse_controled = keys == SnakeKeys()
         InputManager().register_key_down(keys.k_right, self, self.on_right_down)
         InputManager().register_key_down(keys.k_left, self, self.on_left_down)
         InputManager().register_key_up(keys.k_right, self, self.on_right_up)
         InputManager().register_key_up(keys.k_left, self, self.on_left_up)
         InputManager().register_key_down(keys.k_dash, self, self.on_dash_down)
         InputManager().register_key_up(keys.k_dash, self, self.on_dash_up)
+        if self.mouse_controled:
+            InputManager().register_mouse_pressed(
+                BUTTON_LEFT, self, self.on_mouse_pressed
+            )
+            InputManager().register_mouse_released(
+                BUTTON_LEFT, self, self.on_mouse_released
+            )
         for _ in range(10):
             self.add_node()
 
@@ -276,6 +285,14 @@ class Snake(Entity):
     def on_dash_up(self):
         self.dash = False
 
+    def on_mouse_pressed(self):
+        self.should_follow_mouse_pos = True
+
+    def on_mouse_released(self):
+        self.should_follow_mouse_pos = False
+        self.turning_dir = 0
+        self.on_dash_up()
+
     def on_collision(self, first, last):
         del self.nodes[first:last]
         assert len(self.nodes) > 0
@@ -303,6 +320,20 @@ class Snake(Entity):
                 self.on_hit_fruit(fruit)
                 break
 
+    def aim_to_pos(self, pos: Pos, use_shortest_vector=True) -> "SnakeAiActions":
+        angle = 0
+        if use_shortest_vector:
+            sv = shortest_vector(self.transform.pos, pos)
+            angle = sv.angle_to(self.dir)
+        else:
+            angle = (pos - self.transform.pos).angle_to(self.dir)
+        angle = ((angle + 180) % 360) - 180
+        if -20 < angle < 20:
+            return SnakeAiActions.STRAIGHT
+        elif angle >= 20:
+            return SnakeAiActions.LEFT
+        return SnakeAiActions.RIGHT
+
     def update(self, dt: float):
         super().update(dt)
         if Snake.pause:
@@ -320,6 +351,16 @@ class Snake(Entity):
             self.shield_timer -= dt
         else:
             self.shield_timer = 0
+
+        if self.should_follow_mouse_pos:
+            mouse_pos = Vector2(pygame.mouse.get_pos())
+            old_turn_dir = self.turning_dir
+            action = self.aim_to_pos(mouse_pos, False)
+            self.turning_dir = action.value
+            if old_turn_dir == self.turning_dir and old_turn_dir == 0:
+                self.on_dash_down()
+            else:
+                self.on_dash_up()
 
         self.dir.rotate_ip(self.turning_dir * dt * self.speed * 2)
 
@@ -382,16 +423,6 @@ class SnakeAI(Snake):
     @staticmethod
     def random_action():
         return SnakeAiActions(randint(-1, 1))
-
-    def aim_to_pos(self, pos) -> SnakeAiActions:
-        sv = shortest_vector(self.transform.pos, pos)
-        angle = sv.angle_to(self.dir)
-        angle = ((angle + 180) % 360) - 180
-        if -20 < angle < 20:
-            return SnakeAiActions.STRAIGHT
-        elif angle >= 20:
-            return SnakeAiActions.LEFT
-        return SnakeAiActions.RIGHT
 
     def update(self, dt):
         super().update(dt)
