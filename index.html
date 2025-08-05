@@ -3,7 +3,7 @@
 print("""
 Loading sneakyloop from sneakyloop.apk
     Pygbag Version : 0.9.2
-    Template Version : 0.9.0
+    Template Version : 0.9.3
     Python  : 3.12
     CDN URL : https://pygame-web.github.io/archives/0.9/
     Screen  : 1280x720
@@ -256,11 +256,9 @@ config = {
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes"/>
 
-    <link rel="prefetch" href="https://pygame-web.github.io/archives/0.9/pythonrc.py">
+    <link rel="prefetch" href="https://pygame-web.github.io/archives/0.9/cpythonrc.py">
     <link rel="prefetch" href="https://pygame-web.github.io/archives/0.9/vt/xterm.js">
     <link rel="prefetch" href="https://pygame-web.github.io/archives/0.9/vt/xterm-addon-image.js">
-    <link rel="prefetch" href="https://pygame-web.github.io/archives/0.9/vt/xterm-addon-image.js">
-
 
     <link rel="icon" type="image/png" href="favicon.png" sizes="16x16">
 
@@ -348,7 +346,7 @@ config = {
 <body>
 
     <div id="transfer" align=center>
-<!--        <div class="spinner" id='spinner'></div> -->
+        <div class="spinner" id='spinner'></div>
         <div class="emscripten" id="status">Downloading...</div>
         <div class="emscripten">
             <progress value="0" max="100" id="progress"></progress>
@@ -421,6 +419,10 @@ frameborder="1"
 
     <script type="application/javascript">
 
+    globalThis.__canvas_resized = (self, ecw, ech) => {
+        console.warn("TODO: panda3d canvas monitor", self, ecw, ech)
+    }
+
     async function custom_onload(debug_hidden) {
         // this is called before anything python is loaded
         // make your js customization here
@@ -428,7 +430,7 @@ frameborder="1"
 
         pyconsole.hidden = debug_hidden
         system.hidden = debug_hidden
-        transfer.hidden = debug_hidden
+        transfer.hidden = false
         info.hidden = debug_hidden
         box.hidden =  debug_hidden
 
